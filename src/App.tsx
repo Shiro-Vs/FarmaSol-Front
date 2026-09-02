@@ -1,33 +1,64 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import LoginCliente from './Cliente/LoginCliente';
-import LoginAdmin from './Admin/LoginAdmin';
-import RegisterCliente from './Cliente/RegisterCliente';
-import RegisterAdmin from './Admin/RegisterAdmin';
-import ForgotPasswordCliente from './Cliente/ForgotPasswordCliente';
-import ForgotPasswordAdmin from './Admin/ForgotPasswordAdmin';
-import CorreoCliente from './Cliente/CorreoCliente';
-import CorreoAdmin from './Admin/CorreoAdmin';
-import HomeCliente from './Cliente/HomeCliente';
-import HomeAdmin from './Admin/HomeAdmin';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthContext';
+import { RequireAuth, RequireStaff } from './auth/RequireAuth';
+import { PublicLayout } from './layout/PublicLayout';
+import { Home } from './pages/Home';
+import { EnConstruccion, Nosotros } from './pages/EnConstruccion';
+import { Login } from './pages/auth/Login';
+import { Registro } from './pages/auth/Registro';
+import { AdminLogin } from './pages/auth/AdminLogin';
+import { AdminHome } from './pages/admin/AdminHome';
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Rutas para Cliente */}
-        <Route path="/cliente/login" element={<LoginCliente />} />
-        <Route path="/cliente/register" element={<RegisterCliente />} />
-        <Route path="/cliente/verificar-correo" element={<CorreoCliente />} />
-        <Route path="/cliente/forgot-password" element={<ForgotPasswordCliente />} />
-        <Route path="/home-cliente" element={<HomeCliente />} />
+      <AuthProvider>
+        <Routes>
+          {/* Autenticación (sin layout) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* Rutas para Administrador */}
-        <Route path="/admin/login" element={<LoginAdmin />} />
-        <Route path="/admin/register" element={<RegisterAdmin />} />
-        <Route path="/admin/verificar-correo" element={<CorreoAdmin />} />
-        <Route path="/admin/forgot-password" element={<ForgotPasswordAdmin />} />
-        <Route path="/home-admin" element={<HomeAdmin />} />
-      </Routes>
+          {/* Tienda pública */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/nosotros" element={<Nosotros />} />
+            <Route path="/categoria/:slug" element={<EnConstruccion titulo="Categoría" />} />
+            <Route path="/buscar" element={<EnConstruccion titulo="Resultados de búsqueda" />} />
+            <Route path="/carrito" element={<EnConstruccion titulo="Mi carrito" />} />
+
+            {/* Solo cliente autenticado */}
+            <Route
+              path="/mis-pedidos"
+              element={
+                <RequireAuth>
+                  <EnConstruccion titulo="Mis pedidos" />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/mi-perfil"
+              element={
+                <RequireAuth>
+                  <EnConstruccion titulo="Mi perfil" />
+                </RequireAuth>
+              }
+            />
+          </Route>
+
+          {/* Panel interno */}
+          <Route
+            path="/admin"
+            element={
+              <RequireStaff>
+                <AdminHome />
+              </RequireStaff>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
